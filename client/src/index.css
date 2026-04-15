@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Kinetic Terminal Color Palette ── */
+  --color-surface:               #0b1326;
+  --color-surface-dim:           #060e20;
+  --color-surface-container-low: #131b2e;
+  --color-surface-container:     #171f33;
+  --color-surface-container-mid: #222a3d;
+  --color-surface-container-high:#2d3449;
+
+  --color-primary:     #98da27;
+  --color-on-primary:  #213600;
+  --color-secondary:   #5de6ff;
+  --color-on-secondary:#003640;
+
+  --color-text-primary: #dae2fd;
+  --color-text-variant: #c6c6cd;
+  --color-text-muted:   #8b93a8;
+
+  --color-border:       #2d3449;
+  --color-border-dim:   #222a3d;
+
+  --color-error:        #ff5449;
+  --color-warning:      #f59e0b;
+  --color-success:      #98da27;
+
+  /* ── Fonts ── */
+  --font-sans:     'Inter', system-ui, sans-serif;
+  --font-headline: 'Space Grotesk', system-ui, sans-serif;
+
+  /* ── Border radius (minimal / terminal) ── */
+  --radius:    0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl:0.75rem;
+  --radius-full: 9999px;
+}
+
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  background-color: #0b1326;
+  color: #dae2fd;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Terminal grid background ── */
+.terminal-grid {
+  background-image: radial-gradient(
+    circle at 2px 2px,
+    rgba(152, 218, 39, 0.05) 1px,
+    transparent 0
+  );
+  background-size: 40px 40px;
+}
+
+/* ── Glass panel ── */
+.glass-panel {
+  background: rgba(45, 52, 73, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(45, 52, 73, 0.8);
+}
+
+/* ── Headline font helper ── */
+.font-headline {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0b1326; }
+::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #98da27; }
+
+/* ── Number input: hide spin buttons ── */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; }
+
+/* ── Date input calendar icon tint ── */
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.5) sepia(1) saturate(3) hue-rotate(60deg);
+  cursor: pointer;
+}
+
+/* ── Select arrow tint ── */
+select option {
+  background-color: #131b2e;
+  color: #dae2fd;
+}
