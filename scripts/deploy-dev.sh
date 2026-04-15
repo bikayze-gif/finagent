@@ -1,32 +1,22 @@
 #!/bin/bash
 # =============================================================================
 #  Deploy FinAgent → Ambiente DEV
-#  Ejecutar desde Craft Agent (terminal Bash):
+#  Arquitectura: Docker container → SSH directo → VPS host (172.17.0.1)
+#
+#  Ejecutar desde Craft Agent:
 #    bash scripts/deploy-dev.sh
 #
-#  Requiere: scripts/.env.deploy con DEPLOY_SECRET=xxx
+#  No requiere webhook, GitHub push, ni secrets.
+#  Sincroniza src/ directamente al host. tsx watch auto-recarga el servidor.
 # =============================================================================
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="${SCRIPT_DIR}/.env.deploy"
-WEBHOOK_URL="http://144.91.80.189:7410"
-PROJECT="finagent-dev"
-WORKSPACE_DIR="$(dirname "$SCRIPT_DIR")"
-
-# ── Cargar secret ────────────────────────────────────────────────────────────
-if [ ! -f "$ENV_FILE" ]; then
-  echo "ERROR: No se encontró $ENV_FILE"
-  echo "Crea el archivo con: DEPLOY_SECRET=<secret-del-vps-setup>"
-  exit 1
-fi
-
-source "$ENV_FILE"
-
-if [ -z "$DEPLOY_SECRET" ]; then
-  echo "ERROR: DEPLOY_SECRET no está definido en $ENV_FILE"
-  exit 1
-fi
+WORKSPACE_DIR="/home/craftagents/.craft-agent/workspaces/finagent"
+HOST="root@172.17.0.1"
+KEY="$HOME/.ssh/vps_cynapt"
+SSH_CMD="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i $KEY"
+SCP_CMD="scp -o StrictHostKeyChecking=no -i $KEY"
+TARGET="/var/www/finagent-dev"
 
 echo ""
 echo "═══════════════════════════════════════"
@@ -34,67 +24,39 @@ echo "  Deploy FinAgent DEV"
 echo "  $(date '+%Y-%m-%d %H:%M:%S')"
 echo "═══════════════════════════════════════"
 
-# ── Git push ─────────────────────────────────────────────────────────────────
+# ── Verificar conexión al host ────────────────────────────────────────────────
 echo ""
-echo "▶ [1/3] Git push a GitHub..."
-cd "$WORKSPACE_DIR"
-
-# Agregar todos los cambios (excluyendo lo que está en .gitignore)
-git add -A
-CHANGES=$(git status --porcelain | wc -l | tr -d ' ')
-
-if [ "$CHANGES" = "0" ]; then
-  echo "  ℹ No hay cambios nuevos para hacer commit"
-else
-  TIMESTAMP=$(date '+%Y-%m-%d %H:%M')
-  git commit -m "deploy: finagent-dev ${TIMESTAMP}" --allow-empty
-  echo "  ✓ Commit creado"
-fi
-
-git push origin main
-echo "  ✓ Push a GitHub OK"
-
-# ── Health check del webhook ──────────────────────────────────────────────────
-echo ""
-echo "▶ [2/3] Verificando webhook en VPS..."
-HEALTH=$(curl -sf "${WEBHOOK_URL}/health" 2>/dev/null || echo "ERROR")
-
-if echo "$HEALTH" | grep -q '"ok"'; then
-  echo "  ✓ Webhook activo"
-else
-  echo "  ERROR: No se puede alcanzar el webhook en ${WEBHOOK_URL}"
-  echo "  Respuesta: $HEALTH"
-  echo ""
-  echo "  Verifica que el proceso deploy-webhook esté activo en el VPS:"
-  echo "    pm2 status deploy-webhook"
+echo "▶ [0/3] Verificando conexión al host..."
+$SSH_CMD "$HOST" "echo ok" > /dev/null 2>&1 && echo "  ✓ Host accesible" || {
+  echo "  ERROR: No se puede conectar al host VPS (172.17.0.1)"
   exit 1
-fi
+}
 
-# ── Trigger deploy ────────────────────────────────────────────────────────────
+# ── Sync server/src ───────────────────────────────────────────────────────────
 echo ""
-echo "▶ [3/3] Triggering deploy ${PROJECT} en VPS..."
+echo "▶ [1/3] Sincronizando server/src..."
+$SSH_CMD "$HOST" "mkdir -p $TARGET/server/src"
+$SCP_CMD -r "$WORKSPACE_DIR/server/src/." "$HOST:$TARGET/server/src/"
+echo "  ✓ server/src sincronizado"
 
-RESPONSE=$(curl -sf -X POST \
-  "${WEBHOOK_URL}/deploy/${PROJECT}" \
-  -H "Authorization: Bearer ${DEPLOY_SECRET}" \
-  -H "Content-Type: application/json" \
-  2>/dev/null)
+# ── Sync client/src ───────────────────────────────────────────────────────────
+echo ""
+echo "▶ [2/3] Sincronizando client/src..."
+$SSH_CMD "$HOST" "mkdir -p $TARGET/client/src"
+$SCP_CMD -r "$WORKSPACE_DIR/client/src/." "$HOST:$TARGET/client/src/"
+$SCP_CMD "$WORKSPACE_DIR/client/index.html" "$HOST:$TARGET/client/"
+echo "  ✓ client/src sincronizado"
 
-if echo "$RESPONSE" | grep -q '"ok":true'; then
-  DEPLOY_ID=$(echo "$RESPONSE" | grep -o '"deployId":[0-9]*' | cut -d: -f2)
-  echo "  ✓ Deploy iniciado (id: ${DEPLOY_ID})"
-  echo ""
-  echo "  Logs en VPS: /tmp/deploy-${PROJECT}-${DEPLOY_ID}.log"
-  echo "  O via webhook: curl -H 'Authorization: Bearer \$DEPLOY_SECRET' ${WEBHOOK_URL}/logs/${DEPLOY_ID}"
-  echo ""
-  echo "  App DEV: http://144.91.80.189:4011"
-else
-  echo "  ERROR: deploy falló"
-  echo "  Respuesta: $RESPONSE"
-  exit 1
-fi
+# ── Restart PM2 dev ───────────────────────────────────────────────────────────
+echo ""
+echo "▶ [3/3] Reiniciando procesos DEV..."
+$SSH_CMD "$HOST" "pm2 restart finagent-dev 2>/dev/null || echo 'WARN: finagent-dev no encontrado en PM2'"
+echo "  ✓ PM2 finagent-dev reiniciado"
 
+echo ""
 echo "═══════════════════════════════════════"
 echo "  Deploy DEV completado ✓"
+echo "  API:    http://144.91.80.189:5010"
+echo "  UI Dev: http://144.91.80.189:4011"
 echo "═══════════════════════════════════════"
 echo ""
