@@ -36,3 +36,6 @@ Thumbs.db
 
 # PM2
 .pm2/
+
+# Deploy secrets (nunca commitear)
+scripts/.env.deploy
