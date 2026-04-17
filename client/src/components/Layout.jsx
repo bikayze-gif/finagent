@@ -8,6 +8,7 @@ import {
   Landmark,
   Settings,
   LogOut,
+  CalendarClock,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -18,6 +19,7 @@ const navItems = [
   { to: '/budgets', icon: PiggyBank, label: 'Presupuestos' },
   { to: '/goals', icon: Target, label: 'Metas' },
   { to: '/accounts', icon: Landmark, label: 'Cuentas' },
+  { to: '/activities', icon: CalendarClock, label: 'Actividades' },
 ];
 
 const mobileNavItems = navItems.slice(0, 5);

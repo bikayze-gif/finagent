@@ -10,6 +10,7 @@ import catRoutes from "./routes/categories.js";
 import budgetRoutes from "./routes/budgets.js";
 import dashRoutes from "./routes/dashboard.js";
 import goalRoutes from "./routes/goals.js";
+import activityRoutes from "./routes/activities.js";
 
 const app = new Hono();
 
@@ -34,6 +35,7 @@ app.route("/api/categories", catRoutes);
 app.route("/api/budgets", budgetRoutes);
 app.route("/api/dashboard", dashRoutes);
 app.route("/api/goals", goalRoutes);
+app.route("/api/activities", activityRoutes);
 
 // 404 fallback
 app.notFound((c) => c.json({ success: false, error: "Not found" }, 404));

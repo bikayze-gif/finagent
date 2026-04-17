@@ -10,6 +10,7 @@ import Budgets from './pages/Budgets';
 import Goals from './pages/Goals';
 import AccountsPage from './pages/AccountsPage';
 import Settings from './pages/Settings';
+import Activities from './pages/Activities';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/budgets" element={<Budgets />} />
         <Route path="/goals" element={<Goals />} />
         <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/activities" element={<Activities />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

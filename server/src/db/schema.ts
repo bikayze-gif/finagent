@@ -137,6 +137,24 @@ export const aiConversations = mysqlTable("ai_conversations", {
 });
 
 // ==========================================
+// ACTIVITIES
+// ==========================================
+export const activities = mysqlTable("activities", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 150 }).notNull(),
+  description: text("description"),
+  frequency: mysqlEnum("frequency", ["quincenal", "mensual"]).notNull().default("mensual"),
+  amount: decimal("amount", { precision: 15, scale: 2 }),
+  startDate: date("start_date"),
+  cycleDay: int("cycle_day"),
+  status: mysqlEnum("status", ["active", "paused", "completed", "cancelled"]).notNull().default("active"),
+  color: char("color", { length: 7 }).default("#5de6ff"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+// ==========================================
 // FINANCIAL GOALS
 // ==========================================
 export const financialGoals = mysqlTable("financial_goals", {
