@@ -12,7 +12,7 @@ activityRoutes.use("*", authMiddleware);
 
 const createSchema = z.object({
   name: z.string().min(1).max(150),
-  description: z.string().max(1000).optional(),
+  description: z.string().max(1000).nullable().optional(),
   frequency: z.enum(["quincenal", "mensual"]),
   amount: z.number().positive().nullable().optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
