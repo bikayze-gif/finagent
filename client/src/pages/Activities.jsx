@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, Activity, PauseCircle, CalendarClock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Activity, PauseCircle, CalendarClock, ChevronDown } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { formatCurrency } from '../lib/formatters';
 import Card from '../components/ui/Card';
@@ -32,6 +32,17 @@ const COLORS = [
   '#5de6ff', '#98da27', '#f59e0b', '#ff5449',
   '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6',
 ];
+
+const COLOR_NAMES = {
+  '#5de6ff': 'Cian',
+  '#98da27': 'Verde',
+  '#f59e0b': 'Naranja',
+  '#ff5449': 'Rojo',
+  '#3b82f6': 'Azul',
+  '#8b5cf6': 'Púrpura',
+  '#ec4899': 'Rosa',
+  '#14b8a6': 'Teal',
+};
 
 function cycleDayLabel(frequency, day) {
   if (!day) return null;
@@ -87,7 +98,21 @@ export default function Activities() {
   const [editActivity, setEditActivity] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [cycleDayValue, setCycleDayValue] = useState(null);
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const colorPickerRef = useRef(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target)) {
+        setColorPickerOpen(false);
+      }
+    }
+    if (colorPickerOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [colorPickerOpen]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['activities'],
@@ -154,7 +179,7 @@ export default function Activities() {
     setShowForm(true);
   };
 
-  const closeForm = () => { setShowForm(false); setEditActivity(null); setCycleDayValue(null); reset(); };
+  const closeForm = () => { setShowForm(false); setEditActivity(null); setCycleDayValue(null); setColorPickerOpen(false); reset(); };
 
   const onSubmit = async (data) => {
     const payload = {
@@ -382,23 +407,70 @@ export default function Activities() {
             <Input label="Fecha inicio" type="date" {...register('startDate')} />
           </div>
 
-          {/* Color picker */}
-          <div>
+          {/* Color picker — collapsible */}
+          <div ref={colorPickerRef} style={{ position: 'relative' }}>
             <label className="text-xs font-medium uppercase tracking-wider block mb-2" style={{ color: '#8b93a8' }}>Color</label>
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map((color) => (
-                <label key={color} className="cursor-pointer">
-                  <input type="radio" value={color} className="sr-only" {...register('color')} />
-                  <div className="w-7 h-7 rounded-full transition-all duration-150"
-                    style={{
-                      backgroundColor: color,
-                      transform: selectedColor === color ? 'scale(1.15)' : 'scale(1)',
-                      boxShadow: selectedColor === color ? `0 0 0 2px #0b1326, 0 0 0 4px ${color}` : 'none',
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setColorPickerOpen((v) => !v)}
+              className="flex items-center gap-2 px-3 py-2 rounded transition-all duration-150 cursor-pointer"
+              style={{
+                background: '#0b1326',
+                border: `1.5px solid ${colorPickerOpen ? selectedColor : '#2d3449'}`,
+                color: '#dae2fd',
+              }}
+            >
+              <span
+                className="w-4 h-4 rounded-full flex-shrink-0"
+                style={{ backgroundColor: selectedColor }}
+              />
+              <span className="text-sm" style={{ color: '#c6c6cd' }}>
+                {COLOR_NAMES[selectedColor] || selectedColor}
+              </span>
+              <ChevronDown
+                size={14}
+                style={{
+                  color: '#8b93a8',
+                  marginLeft: '4px',
+                  transform: colorPickerOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease',
+                }}
+              />
+            </button>
+
+            {colorPickerOpen && (
+              <div
+                className="absolute z-10 mt-1.5 p-3 rounded"
+                style={{
+                  background: '#0d1929',
+                  border: '1px solid #2d3449',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                  minWidth: '164px',
+                }}
+              >
+                <p className="text-xs mb-2.5 uppercase tracking-wider" style={{ color: '#4a5568' }}>
+                  Elige un color
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => { setValue('color', color); setColorPickerOpen(false); }}
+                      className="w-8 h-8 rounded-full transition-all duration-150 cursor-pointer"
+                      style={{
+                        backgroundColor: color,
+                        transform: selectedColor === color ? 'scale(1.15)' : 'scale(1)',
+                        boxShadow: selectedColor === color
+                          ? `0 0 0 2px #0b1326, 0 0 0 4px ${color}`
+                          : 'none',
+                      }}
+                      title={COLOR_NAMES[color]}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
