@@ -1,6 +1,6 @@
 # FinAgent — Roadmap de Implementación
 
-> Última actualización: 2026-04-17
+> Última actualización: 2026-04-17 — QA Fase 6 completado
 
 ## Leyenda
 - ✅ Completo
@@ -95,24 +95,30 @@ Tipografía: Space Grotesk (headlines) + Inter (body)
 
 ---
 
-## Fase 6 — Feature: Activities 🔄
-**Iniciado:** 2026-04-17 | **Estado:** En progreso
+## Fase 6 — Feature: Activities ✅
+**Completado:** 2026-04-17 | **QA:** APROBADO (13/13 TCs)
 
-Objetivo: módulo de actividad reciente que muestra el historial de acciones del usuario.
+Módulo CRUD de actividades financieras recurrentes (pagos, compromisos periódicos).
 
-### Pendiente de review/commit:
-- [ ] `server/src/routes/activities.ts` — endpoint GET /activities
-- [ ] `server/src/index.ts` — registro de la ruta
-- [ ] `server/src/db/schema.ts` — tabla de actividades (si aplica)
-- [ ] `client/src/pages/Activities.jsx` — página de actividades
-- [ ] `client/src/App.jsx` — ruta nueva en router
-- [ ] `client/src/components/Layout.jsx` — enlace en sidebar
+### Implementación:
+- [x] `server/src/routes/activities.ts` — CRUD completo (GET, POST, PATCH, DELETE)
+- [x] `server/src/index.ts` — ruta registrada en `/api/activities`
+- [x] DB: tabla `activities` (userId, name, frequency, cycleDay, amount, color, status, startDate)
+- [x] `client/src/pages/Activities.jsx` — página con lista, modal crear/editar, confirmación delete
+- [x] `client/src/App.jsx` — ruta `/activities` en router
+- [x] `client/src/components/Layout.jsx` — enlace "ACTIVIDADES" con ícono CalendarClock en sidebar
 
-### Criterios de aceptación:
-- [ ] Lista de actividades recientes (últimas 50)
-- [ ] Filtros por tipo de acción
-- [ ] Integrado en el sidebar como "Actividad"
-- [ ] Deploy DEV verificado en http://144.91.80.189:4011
+### QA Results (2026-04-17):
+- [x] TC-01: Navegación — sidebar ACTIVIDADES visible, `/activities` carga sin errores
+- [x] TC-02: Estado vacío — mensaje "Sin actividades registradas" + botón crear
+- [x] TC-03: Crear actividad — card creada con nombre, frecuencia "Mensual" y "↻ Día 5 de cada mes"
+- [x] TC-04: Editar actividad — nombre actualizado correctamente
+- [x] TC-05: Pausar/Reactivar — badge "Pausada" aparece/desaparece
+- [x] TC-06: Eliminar — actividad desaparece de la lista tras confirmar
+- [x] TC-07: Sin errores HTTP 4xx/5xx ni errores JS en consola
+
+### Bugs:
+- [x] **BUG-01** *(resuelto b7337ef)*: `description: null` retorna 422 → fix `.nullable().optional()` en createSchema
 
 ---
 
